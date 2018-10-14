@@ -1,0 +1,5 @@
+.ensime
+.ensime_cache/
+.idea/
+project/
+target/
