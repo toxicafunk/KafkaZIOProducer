@@ -19,4 +19,9 @@ libraryDependencies ++= Seq(
   "org.apache.camel" % "camel-kafka" % camelVersion,
 )
 
+libraryDependencies ++= Seq(
+  "co.fs2" %% "fs2-core" % "1.0.0",
+  "co.fs2" %% "fs2-io" % "1.0.0"
+)
+
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")

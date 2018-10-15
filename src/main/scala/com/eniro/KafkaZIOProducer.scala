@@ -1,15 +1,13 @@
 package com.eniro
 
+import fs2.Stream
 import org.apache.camel.CamelContext
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.properties.PropertiesComponent
 import org.apache.camel.impl.DefaultCamelContext
-import scalaz.Scalaz._
-import scalaz.Tag
-import scalaz.Tags.Parallel
-import scalaz.zio.{IO, RTS}
-import scalaz.zio.interop._
-import scalaz.zio.interop.scalaz72.ParIO
+import scalaz.zio.RTS
+import scalaz.zio.interop.Task
+import scalaz.zio.interop.catz._
 
 import scala.io.Source
 
@@ -31,8 +29,6 @@ object KafkaZIOProducer extends RTS {
   val producerTemplate = ctx.createProducerTemplate()
   ctx.start()
 
-  val readFile: String => IO[Exception, Stream[String]] = (file: String) => IO.syncException(Source.fromFile(file).getLines().toStream)
-
   val anchor = "ecoId"
   val extractKey = (line: String) => {
     val start = line.indexOf(anchor) + anchor.length
@@ -40,24 +36,14 @@ object KafkaZIOProducer extends RTS {
     line.substring(start, end).replaceAll("\\W", "")
   }
 
-  val sendMessage: String => IO[Nothing, Unit] = (data: String) =>
-    IO.sync(producerTemplate.sendBodyAndHeader("direct:toKafka", data, "key", extractKey(data)))
+  val readFile: String => Stream[Task, String] = (file: String) => Stream.emits(Source.fromFile(file).getLines().toStream)
 
-  val sendMessages: Stream[String] => IO[Nothing, Unit] = (dataStream: Stream[String]) =>
-    dataStream.foldLeft(IO.unit)((acc, data) => {
-      println(Thread.currentThread().getId + " " + data)
-      acc.mappend(sendMessage(data))
-    })
-
-  //type ParIO[A] = IO[Nothing, A]
-
-  val program: IO[Exception, Unit] = for {
-    dataStream <- readFile("/home/enrs/tools/fbevents.json")
-    _ <- sendMessages(dataStream)
-  } yield ()
+  val program: Stream[Task, Unit] = for {
+    data <- readFile("/home/enrs/tools/fbevents.json")
+  } yield producerTemplate.sendBodyAndHeader("direct:toKafka", data, "key", extractKey(data))
 
   def main(args: Array[String]): Unit = {
-    println(unsafeRun(program))
+    println(unsafeRun(program.compile.toList))
   }
 
 }
