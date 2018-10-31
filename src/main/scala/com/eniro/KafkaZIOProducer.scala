@@ -27,8 +27,6 @@ object KafkaZIOProducer extends RTS {
   val producerTemplate = ctx.createProducerTemplate()
   ctx.start()
 
-  val readFile: String => IO[Exception, Stream[String]] = (file: String) => IO.syncException(Source.fromFile(file).getLines().toStream)
-
   val anchor = "id"
   val extractKey = (line: String) => {
     val start = line.indexOf(anchor) + anchor.length
@@ -36,24 +34,15 @@ object KafkaZIOProducer extends RTS {
     line.substring(start + 5, end - 1)//.replaceAll("\\W", "")
   }
 
-  val sendMessage: String => IO[Nothing, Unit] = (data: String) =>
-    IO.sync(producerTemplate.sendBodyAndHeader("direct:toKafka", data, "key", extractKey(data)))
+  val readFile: String => IO[Nothing, (String => Unit) => Unit] = (file: String) => IO.sync(Source.fromFile(file).getLines().foreach(_))
 
-  val sendMessages: Stream[String] => IO[Nothing, Unit] = (dataStream: Stream[String]) =>
-    dataStream.foldLeft(IO.unit)((acc, data) => {
-      sendMessage(data).fork.flatMap(fib => acc.mappend(fib.join))
-    })
+  val sendMessage: String => Unit = (data: String) =>
+    producerTemplate.sendBodyAndHeader("direct:toKafka", data, "key", extractKey(data))
 
-  /*val sendMessages: Stream[String] => IO[Nothing, Unit] = (dataStream: Stream[String]) =>
-    dataStream.foldLeft(IO.unit)((acc, data) => {
-      acc.mappend(sendMessage(data))
-    })*/
-
-  val filename = "/home/enrs/tools/profile-events.json"
-  //val filename = "/home/enrs/tools/just5k.json"
+  val filename = "./just5k.json"
   val program: IO[Exception, Unit] = for {
-    dataStream <- readFile(filename)
-    _ <- sendMessages(dataStream)
+    fe <- readFile(filename)
+    _ <- IO.sync(fe(sendMessage))
   } yield ()
 
   def main(args: Array[String]): Unit = {
