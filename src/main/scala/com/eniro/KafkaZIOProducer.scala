@@ -43,7 +43,10 @@ object KafkaZIOProducer extends RTS {
   } yield producerTemplate.sendBodyAndHeader("direct:toKafka", data, "key", extractKey(data))
 
   def main(args: Array[String]): Unit = {
+    val t0 = System.nanoTime()
     println(unsafeRun(program.compile.toList))
+    val t1 = System.nanoTime()
+    println("Elapsed time: " + (t1 - t0) + "ns")
   }
 
 }
