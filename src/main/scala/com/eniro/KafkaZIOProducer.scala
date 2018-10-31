@@ -5,11 +5,7 @@ import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.properties.PropertiesComponent
 import org.apache.camel.impl.DefaultCamelContext
 import scalaz.Scalaz._
-import scalaz.Tag
-import scalaz.Tags.Parallel
 import scalaz.zio.{IO, RTS}
-import scalaz.zio.interop._
-import scalaz.zio.interop.scalaz72.ParIO
 
 import scala.io.Source
 
@@ -33,7 +29,7 @@ object KafkaZIOProducer extends RTS {
 
   val readFile: String => IO[Exception, Stream[String]] = (file: String) => IO.syncException(Source.fromFile(file).getLines().toStream)
 
-  val anchor = "ecoId"
+  val anchor = "id"
   val extractKey = (line: String) => {
     val start = line.indexOf(anchor) + anchor.length
     val end = line.indexOf(",", start)
@@ -43,21 +39,28 @@ object KafkaZIOProducer extends RTS {
   val sendMessage: String => IO[Nothing, Unit] = (data: String) =>
     IO.sync(producerTemplate.sendBodyAndHeader("direct:toKafka", data, "key", extractKey(data)))
 
+  /*val sendMessages: Stream[String] => IO[Nothing, Unit] = (dataStream: Stream[String]) =>
+    dataStream.foldLeft(IO.unit)((acc, data) => {
+      sendMessage(data).fork.flatMap(fib => acc.mappend(fib.join))
+    })*/
+
   val sendMessages: Stream[String] => IO[Nothing, Unit] = (dataStream: Stream[String]) =>
     dataStream.foldLeft(IO.unit)((acc, data) => {
-      println(Thread.currentThread().getId + " " + data)
       acc.mappend(sendMessage(data))
     })
 
-  //type ParIO[A] = IO[Nothing, A]
-
+  val filename = "/home/enrs/tools/profile-events.json"
+  //val filename = "/home/enrs/tools/just5k.json"
   val program: IO[Exception, Unit] = for {
-    dataStream <- readFile("/home/enrs/tools/fbevents.json")
+    dataStream <- readFile(filename)
     _ <- sendMessages(dataStream)
   } yield ()
 
   def main(args: Array[String]): Unit = {
-    println(unsafeRun(program))
+    val t0 = System.currentTimeMillis()
+    unsafeRun(program)
+    val t1 = System.currentTimeMillis()
+    println("Elapsed time: " + (t1 - t0) + "ms")
   }
 
 }
