@@ -33,21 +33,21 @@ object KafkaZIOProducer extends RTS {
   val extractKey = (line: String) => {
     val start = line.indexOf(anchor) + anchor.length
     val end = line.indexOf(",", start)
-    line.substring(start, end).replaceAll("\\W", "")
+    line.substring(start + 5, end - 1)//.replaceAll("\\W", "")
   }
 
   val sendMessage: String => IO[Nothing, Unit] = (data: String) =>
     IO.sync(producerTemplate.sendBodyAndHeader("direct:toKafka", data, "key", extractKey(data)))
 
-  /*val sendMessages: Stream[String] => IO[Nothing, Unit] = (dataStream: Stream[String]) =>
-    dataStream.foldLeft(IO.unit)((acc, data) => {
-      sendMessage(data).fork.flatMap(fib => acc.mappend(fib.join))
-    })*/
-
   val sendMessages: Stream[String] => IO[Nothing, Unit] = (dataStream: Stream[String]) =>
     dataStream.foldLeft(IO.unit)((acc, data) => {
-      acc.mappend(sendMessage(data))
+      sendMessage(data).fork.flatMap(fib => acc.mappend(fib.join))
     })
+
+  /*val sendMessages: Stream[String] => IO[Nothing, Unit] = (dataStream: Stream[String]) =>
+    dataStream.foldLeft(IO.unit)((acc, data) => {
+      acc.mappend(sendMessage(data))
+    })*/
 
   val filename = "/home/enrs/tools/profile-events.json"
   //val filename = "/home/enrs/tools/just5k.json"
