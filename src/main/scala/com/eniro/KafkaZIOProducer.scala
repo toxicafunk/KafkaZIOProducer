@@ -4,7 +4,6 @@ import org.apache.camel.CamelContext
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.properties.PropertiesComponent
 import org.apache.camel.impl.DefaultCamelContext
-import scalaz.Scalaz._
 import scalaz.zio.{IO, RTS}
 
 import scala.io.Source
@@ -15,7 +14,6 @@ object KafkaZIOProducer extends RTS {
   ctx.addRoutes(new RouteBuilder() {
     override def configure(): Unit = {
       from("direct:toKafka")
-        .to("log:com.eniro.ZioProducer?level=INFO&showHeaders=true")
         .to("kafka:{{kafka.topic}}?brokers={{kafka.brokers}}&clientId=kafkaZioProducer")
     }
   })
@@ -31,7 +29,7 @@ object KafkaZIOProducer extends RTS {
   val extractKey = (line: String) => {
     val start = line.indexOf(anchor) + anchor.length
     val end = line.indexOf(",", start)
-    line.substring(start + 5, end - 1)//.replaceAll("\\W", "")
+    line.substring(start + 5, end - 1) //.replaceAll("\\W", "")
   }
 
   val readFile: String => IO[Nothing, (String => Unit) => Unit] = (file: String) => IO.sync(Source.fromFile(file).getLines().foreach(_))
@@ -42,8 +40,8 @@ object KafkaZIOProducer extends RTS {
   val filename = "./just5k.json"
   val program: IO[Exception, Unit] = for {
     fe <- readFile(filename)
-    _ <- IO.sync(fe(sendMessage))
-  } yield ()
+    fib <- IO.sync(fe(sendMessage)).fork
+  } yield fib.join
 
   def main(args: Array[String]): Unit = {
     val t0 = System.currentTimeMillis()
