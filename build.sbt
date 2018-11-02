@@ -4,7 +4,7 @@ version := "0.1"
 
 scalaVersion := "2.12.7"
 
-val camelVersion = "2.22.1"
+resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
 
 libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.2.25",
@@ -14,9 +14,6 @@ libraryDependencies ++= Seq(
   //"org.scalaz" %% "testz-stdlib"       % "0.0.5"
 )
 
-libraryDependencies ++= Seq(
-  "org.apache.camel" % "camel-core" % camelVersion,
-  "org.apache.camel" % "camel-kafka" % camelVersion,
-)
+libraryDependencies += "net.cakesolutions" %% "scala-kafka-client" % "2.0.0"
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")

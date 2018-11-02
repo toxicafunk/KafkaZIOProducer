@@ -1,29 +1,19 @@
 package com.eniro
 
-import org.apache.camel.CamelContext
-import org.apache.camel.builder.RouteBuilder
-import org.apache.camel.component.properties.PropertiesComponent
-import org.apache.camel.impl.DefaultCamelContext
-import scalaz.zio.{IO, RTS}
+
+import scalaz.zio.{RTS, IO}
 
 import scala.io.Source
+import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
+import cakesolutions.kafka.KafkaProducer.Conf
+import org.apache.kafka.common.serialization.StringSerializer
 
 object KafkaZIOProducer extends RTS {
 
-  val ctx: CamelContext = new DefaultCamelContext()
-  ctx.addRoutes(new RouteBuilder() {
-    override def configure(): Unit = {
-      from("direct:toKafka")
-        .to("kafka:{{kafka.topic}}?brokers={{kafka.brokers}}&clientId=kafkaZioProducer")
-    }
-  })
-
-  val pc = new PropertiesComponent
-  pc.setLocation("classpath:/com/eniro/app.properties")
-  ctx.addComponent("properties", pc)
-
-  val producerTemplate = ctx.createProducerTemplate()
-  ctx.start()
+  // Create a org.apache.kafka.clients.producer.KafkaProducer
+  val producer = KafkaProducer(
+    Conf(new StringSerializer(), new StringSerializer(), bootstrapServers = "172.18.0.2:9092,172.18.0.4:9092,172.18.0.5:9092")
+  )
 
   val anchor = "id"
   val extractKey = (line: String) => {
@@ -32,11 +22,15 @@ object KafkaZIOProducer extends RTS {
     line.substring(start + 5, end - 1) //.replaceAll("\\W", "")
   }
 
-  val readFile: String => IO[Nothing, (String => Unit) => Unit] = (file: String) => IO.sync(Source.fromFile(file).getLines().foreach(_))
+  val readFile: String => IO[Nothing, (String => Unit) => Unit] = (file: String) =>
+    IO.sync(Source.fromFile(file).getLines().foreach(_))
 
-  val sendMessage: String => Unit = (data: String) =>
-    producerTemplate.sendBodyAndHeader("direct:toKafka", data, "key", extractKey(data))
+  val sendMessage: String => Unit = (data: String) => {
+    val record = KafkaProducerRecord("genio.pixel.stream", Some(extractKey(data)), data)
+    producer.send(record)
+  }
 
+  //val filename = "/home/enrs/tools/profile-events.json"
   val filename = "./just5k.json"
   val program: IO[Exception, Unit] = for {
     fe <- readFile(filename)
