@@ -4,6 +4,10 @@ version := "0.1"
 
 scalaVersion := "2.12.7"
 
+fork in run := true
+javaOptions += "-Xms4G"
+javaOptions += "-Xmx16G"
+
 resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
 
 libraryDependencies ++= Seq(
