@@ -1,9 +1,9 @@
 package com.eniro
 
 
-import scalaz.zio.{RTS, IO}
+import scalaz.zio.{IO, RTS}
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
 import cakesolutions.kafka.KafkaProducer.Conf
 import org.apache.kafka.common.serialization.StringSerializer
@@ -30,16 +30,15 @@ object KafkaZIOProducer extends RTS {
     producer.send(record)
   }
 
-  //val filename = "/home/enrs/tools/profile-events.json"
-  val filename = "./just5k.json"
-  val program: IO[Exception, Unit] = for {
+  val program: String => IO[Nothing, Unit] = (filename: String) => for {
     fe <- readFile(filename)
     fib <- IO.sync(fe(sendMessage)).fork
   } yield fib.join
 
   def main(args: Array[String]): Unit = {
+    val filename = args(0)
     val t0 = System.currentTimeMillis()
-    unsafeRun(program)
+    unsafeRun(program(filename))
     val t1 = System.currentTimeMillis()
     println("Elapsed time: " + (t1 - t0) + "ms")
   }
