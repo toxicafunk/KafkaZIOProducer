@@ -26,7 +26,7 @@ object KafkaZIOProducer extends RTS {
     IO.sync(Source.fromFile(file).getLines().foreach(_))
 
   val sendMessage: String => Unit = (data: String) => {
-    val record = KafkaProducerRecord("genio.pixel.stream", Some(extractKey(data)), data)
+    val record = KafkaProducerRecord("julio.genio.stream", Some(extractKey(data)), data)
     producer.send(record)
   }
 
