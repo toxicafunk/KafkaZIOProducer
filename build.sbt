@@ -10,12 +10,12 @@ javaOptions += "-Xmx16G"
 
 resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
 
+val zioVersion = "0.2.7"
+
 libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.2.25",
-  "org.scalaz" %% "scalaz-zio" % "0.2.7",
-  "org.scalaz" %% "scalaz-zio-interop" % "0.2.7"
-  //"org.scalaz" %% "testz-core"         % "0.0.5",
-  //"org.scalaz" %% "testz-stdlib"       % "0.0.5"
+  "org.scalaz" %% "scalaz-zio" % zioVersion,
+  "org.scalaz" %% "scalaz-zio-interop" % zioVersion
 )
 
 libraryDependencies += "net.cakesolutions" %% "scala-kafka-client" % "2.0.0"
