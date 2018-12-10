@@ -1,16 +1,15 @@
 package com.eniro
 
 
+import cakesolutions.kafka.KafkaProducer.Conf
+import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
+import org.apache.kafka.common.serialization.StringSerializer
 import scalaz.zio.{IO, RTS, Ref}
 
-import scala.io.{BufferedSource, Source}
-import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
-import cakesolutions.kafka.KafkaProducer.Conf
-import org.apache.kafka.common.serialization.StringSerializer
+import scala.io.Source
 
 object KafkaZIOProducer extends RTS {
 
-  // Create a org.apache.kafka.clients.producer.KafkaProducer
   val producer = KafkaProducer(
     Conf(new StringSerializer(), new StringSerializer(), lingerMs = 0,
       bootstrapServers = "172.18.0.2:9092,172.18.0.4:9092,172.18.0.5:9092")
@@ -33,9 +32,9 @@ object KafkaZIOProducer extends RTS {
 
   val program: String => IO[Nothing, Unit] = (filename: String) => for {
     counter <- Ref(0)
-    fe      <- readFile(filename)
+    fe <- readFile(filename)
     fib <- IO.sync(fe(sendMessage)).fork
-    _   <- fib.join
+    _ <- fib.join
   } yield ()
 
   def main(args: Array[String]): Unit = {
