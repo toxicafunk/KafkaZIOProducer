@@ -1,11 +1,14 @@
 package com.eniro
 
 
+import java.util.concurrent.Executors
+
 import cakesolutions.kafka.KafkaProducer.Conf
 import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
 import scalaz.zio.{IO, RTS, Ref}
 
+import scala.concurrent.ExecutionContext
 import scala.io.Source
 
 object KafkaZIOProducer extends RTS {
@@ -22,6 +25,9 @@ object KafkaZIOProducer extends RTS {
     line.substring(start + 5, end - 1) //.replaceAll("\\W", "")
   }
 
+  val executor = Executors.newCachedThreadPool()
+  val ec = ExecutionContext.fromExecutor(executor)
+
   val readFile: String => IO[Nothing, (String => Unit) => Unit] = (file: String) =>
     IO.sync(Source.fromFile(file).getLines().foreach(_))
 
@@ -31,8 +37,7 @@ object KafkaZIOProducer extends RTS {
   }
 
   val program: String => IO[Nothing, Unit] = (filename: String) => for {
-    counter <- Ref(0)
-    fe <- readFile(filename)
+    fe <- readFile(filename).on(ec)
     fib <- IO.sync(fe(sendMessage)).fork
     _ <- fib.join
   } yield ()

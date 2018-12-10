@@ -10,7 +10,7 @@ javaOptions += "-Xmx16G"
 
 resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
 
-val zioVersion = "0.2.7"
+val zioVersion = "0.5.0"
 
 libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.2.25",
