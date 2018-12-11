@@ -6,9 +6,9 @@ import java.util.concurrent.Executors
 import cakesolutions.kafka.KafkaProducer.Conf
 import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
-import scalaz.zio.{IO, RTS, Ref}
+import scalaz.zio.{IO, RTS}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.io.Source
 
 object KafkaZIOProducer extends RTS {
@@ -19,14 +19,13 @@ object KafkaZIOProducer extends RTS {
   )
 
   val anchor = "id"
-  val extractKey = (line: String) => {
+  val extractKey: String => String = (line: String) => {
     val start = line.indexOf(anchor) + anchor.length
     val end = line.indexOf(",", start)
     line.substring(start + 5, end - 1) //.replaceAll("\\W", "")
   }
 
-  val executor = Executors.newCachedThreadPool()
-  val ec = ExecutionContext.fromExecutor(executor)
+  val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
 
   val readFile: String => IO[Nothing, (String => Unit) => Unit] = (file: String) =>
     IO.sync(Source.fromFile(file).getLines().foreach(_))
@@ -38,9 +37,7 @@ object KafkaZIOProducer extends RTS {
 
   val program: String => IO[Nothing, Unit] = (filename: String) => for {
     fe <- readFile(filename).on(ec)
-    fib <- IO.sync(fe(sendMessage)).fork
-    _ <- fib.join
-  } yield ()
+  } yield fe(sendMessage)
 
   def main(args: Array[String]): Unit = {
     val filename = args(0)
