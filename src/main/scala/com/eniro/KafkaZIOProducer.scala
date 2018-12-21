@@ -18,11 +18,10 @@ object KafkaZIOProducer extends RTS {
       bootstrapServers = "172.18.0.2:9092,172.18.0.4:9092,172.18.0.5:9092")
   )
 
-  val anchor = "id"
   val extractKey: String => String = (line: String) => {
-    val start = line.indexOf(anchor) + anchor.length
-    val end = line.indexOf(",", start)
-    line.substring(start + 5, end - 1) //.replaceAll("\\W", "")
+    val start = line.indexOf(":")
+    val end = line.indexOf(",")
+    line.substring(start + 2, end - 1)
   }
 
   val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
