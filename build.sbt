@@ -10,10 +10,8 @@ javaOptions += "-Xmx16G"
 
 resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
 
-libraryDependencies ++= Seq(
-  "co.fs2" %% "fs2-core" % "1.0.1",
-  "co.fs2" %% "fs2-io" % "1.1.0"
-)
+libraryDependencies += "co.fs2" %% "fs2-core" % "1.0.1"
+libraryDependencies += "co.fs2" %% "fs2-io" % "1.0.1"
 
 libraryDependencies += "org.typelevel" %% "cats-effect" % "1.1.0"
 
