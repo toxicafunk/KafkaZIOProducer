@@ -2,23 +2,36 @@ package com.eniro
 
 import cats.effect.{ExitCode, IO, IOApp, Resource}
 import cats.implicits._
-import fs2.{io, text, Stream}
+import fs2.{Stream, io, text}
 import java.nio.file.Paths
 import java.util.concurrent.Executors
+
+import cakesolutions.kafka.KafkaProducer
+import cakesolutions.kafka.KafkaProducer.Conf
+import org.apache.kafka.common.serialization.StringSerializer
+
 import scala.concurrent.ExecutionContext
 
 object Converter extends IOApp {
   private val blockingExecutionContext =
-    Resource.make(IO(ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2))))(ec => IO(ec.shutdown()))
+    Resource.make(IO(ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))))(ec => IO(ec.shutdown()))
 
-  val converter: Stream[IO, Unit] = Stream.resource(blockingExecutionContext).flatMap { blockingEC =>
-    def fahrenheitToCelsius(f: Double): Double =
-      (f - 32.0) * (5.0 / 9.0)
+  val producer = KafkaProducer(
+    Conf(new StringSerializer(), new StringSerializer(), lingerMs = 0,
+      bootstrapServers = "172.18.0.2:9092,172.18.0.4:9092,172.18.0.5:9092")
+  )
 
-    io.file.readAll[IO](Paths.get("testdata/fahrenheit.txt"), blockingEC, 4096)
+  val extractKey: String => String = (line: String) => {
+    val start = line.indexOf(":")
+    val end = line.indexOf(",")
+    line.substring(start + 2, end - 1)
+  }
+
+  val processMessages: Stream[IO, Unit] = (file: String) => Stream.resource(blockingExecutionContext).flatMap { blockingEC =>
+
+    io.file.readAll[IO](Paths.get(file), blockingEC, 4096)
       .through(text.utf8Decode)
       .through(text.lines)
-      .filter(s => !s.trim.isEmpty && !s.startsWith("//"))
       .map(line => fahrenheitToCelsius(line.toDouble).toString)
       .intersperse("\n")
       .through(text.utf8Encode)
@@ -26,5 +39,5 @@ object Converter extends IOApp {
   }
 
   def run(args: List[String]): IO[ExitCode] =
-    converter.compile.drain.as(ExitCode.Success)
+    processMessages.compile.drain.as(ExitCode.Success)
 }
