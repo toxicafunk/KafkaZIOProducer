@@ -27,7 +27,7 @@ object KafkaZIOProducer extends RTS {
   val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
 
   val readFile: String => IO[Nothing, (String => Unit) => Unit] = (file: String) =>
-    IO.sync(Source.fromFile(file).getLines().foreach(_))
+    IO.unyielding(IO.sync(Source.fromFile(file).getLines().foreach(_)))
 
   val sendMessage: String => Unit = (data: String) => {
     val record = KafkaProducerRecord("julio.genio.stream", Some(extractKey(data)), data)
