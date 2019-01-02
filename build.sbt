@@ -7,6 +7,7 @@ scalaVersion := "2.12.7"
 fork in run := true
 javaOptions += "-Xms4G"
 javaOptions += "-Xmx16G"
+javaOptions += "-agentpath:/usr/share/visualvm/profiler/lib/deployed/jdk16/linux-amd64/libprofilerinterface.so=/usr/share/visualvm/profiler/lib,5140"
 
 resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
 
