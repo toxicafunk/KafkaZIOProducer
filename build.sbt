@@ -7,7 +7,7 @@ scalaVersion := "2.12.7"
 fork in run := true
 javaOptions += "-Xms4G"
 javaOptions += "-Xmx16G"
-javaOptions += "-agentpath:/usr/share/visualvm/profiler/lib/deployed/jdk16/linux-amd64/libprofilerinterface.so=/usr/share/visualvm/profiler/lib,5140"
+//javaOptions += "-agentpath:/usr/share/visualvm/profiler/lib/deployed/jdk16/linux-amd64/libprofilerinterface.so=/usr/share/visualvm/profiler/lib,5140"
 
 resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
 
@@ -21,6 +21,10 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "net.cakesolutions" %% "scala-kafka-client" % "2.0.0"
 
+/*
+ * sbt assembly
+ * /opt/graalvm/bin/native-image --allow-incomplete-classpath -jar kafkaZIOProducer-assembly-0.1.jar 
+ */
 mainClass in assembly := Some("com.eniro.KafkaZIOProducer")
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
