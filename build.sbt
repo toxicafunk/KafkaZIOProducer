@@ -9,17 +9,14 @@ javaOptions += "-Xms4G"
 javaOptions += "-Xmx16G"
 //javaOptions += "-agentpath:/usr/share/visualvm/profiler/lib/deployed/jdk16/linux-amd64/libprofilerinterface.so=/usr/share/visualvm/profiler/lib,5140"
 
-resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
-
 val zioVersion = "0.5.3"
 
 libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.2.25",
   "org.scalaz" %% "scalaz-zio" % zioVersion,
-  "org.scalaz" %% "scalaz-zio-interop" % "0.5.0"
+  "org.scalaz" %% "scalaz-zio-interop" % "0.5.0",
+  "org.apache.kafka" % "kafka-clients" % "2.1.0"
 )
-
-libraryDependencies += "net.cakesolutions" %% "scala-kafka-client" % "2.0.0"
 
 /*
  * sbt assembly

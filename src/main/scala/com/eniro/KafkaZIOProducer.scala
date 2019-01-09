@@ -3,8 +3,11 @@ package com.eniro
 
 import java.util.concurrent.Executors
 
-import cakesolutions.kafka.KafkaProducer.Conf
-import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
+import java.util.Properties
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.Producer
+import org.apache.kafka.clients.producer.ProducerRecord
+
 import org.apache.kafka.common.serialization.StringSerializer
 import scalaz.zio.{IO, RTS}
 
@@ -13,10 +16,18 @@ import scala.io.Source
 
 object KafkaZIOProducer extends RTS {
 
-  val producer = KafkaProducer(
-    Conf(new StringSerializer(), new StringSerializer(), lingerMs = 0,
-      bootstrapServers = "172.18.0.2:9092,172.18.0.4:9092,172.18.0.5:9092")
-  )
+  val props = new Properties()
+  props.put("bootstrap.servers", "172.18.0.2:9092,172.18.0.4:9092,172.18.0.5:9092")
+  props.put("linger.ms", new Integer(0))
+  props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+  props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+  props.put("buffer.memory", new Integer(33554432))
+  props.put("batch.size", new Integer(16384))
+  /*props.put("acks", "all")
+  props.put("retries", 0)
+  */
+
+  val producer = new KafkaProducer[String, String](props)
 
   val extractKey: String => String = (line: String) => {
     val start = line.indexOf(":")
@@ -30,7 +41,7 @@ object KafkaZIOProducer extends RTS {
     IO.unyielding(IO.sync(Source.fromFile(file).getLines().foreach(_)))
 
   val sendMessage: String => Unit = (data: String) => {
-    val record = KafkaProducerRecord("julio.genio.stream", Some(extractKey(data)), data)
+    val record = new ProducerRecord("julio.genio.stream", extractKey(data), data)
     producer.send(record)
   }
 
