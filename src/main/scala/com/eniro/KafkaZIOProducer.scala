@@ -18,7 +18,7 @@ object KafkaZIOProducer extends RTS {
 
   val props = new Properties()
   props.put("bootstrap.servers", "172.18.0.2:9092,172.18.0.4:9092,172.18.0.5:9092")
-  props.put("linger.ms", new Integer(0))
+  props.put("linger.ms", new Integer(1))
   props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
   props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
   props.put("buffer.memory", new Integer(33554432))
@@ -55,6 +55,7 @@ object KafkaZIOProducer extends RTS {
     unsafeRun(program(filename))
     val t1 = System.currentTimeMillis()
     println("Elapsed time: " + (t1 - t0) + "ms")
+    producer.close()
   }
 
 }
