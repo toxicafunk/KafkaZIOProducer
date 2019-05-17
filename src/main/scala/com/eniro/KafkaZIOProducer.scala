@@ -2,17 +2,18 @@ package com.eniro
 
 import cakesolutions.kafka.KafkaProducer.Conf
 import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
-import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.serialization.StringSerializer
 import scalaz.zio.blocking._
-import scalaz.zio.{DefaultRuntime, IO, Runtime, Task, ZIO}
+import scalaz.zio.{blocking => _, _}
 
 import scala.io.Source
 
 object FileReader {
+
   trait Service {
     def readFile(file: String): ZIO[Blocking, Throwable, Iterator[String]]
   }
+
 }
 
 trait FileReader {
@@ -34,9 +35,11 @@ trait FileReaderLive extends FileReader {
 object FileReaderLive extends FileReaderLive with Blocking.Live
 
 object Messaging {
+
   trait Service {
     def send(msg: String): Task[Unit]
   }
+
 }
 
 trait Messaging {
