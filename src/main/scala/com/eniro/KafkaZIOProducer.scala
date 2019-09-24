@@ -46,11 +46,6 @@ trait Messaging {
   val messenger: Messaging.Service
 }
 
-object messaging {
-  def send(msg: String): ZIO[Messaging, Throwable, Unit] =
-    ZIO.accessM(_.messenger.send(msg))
-}
-
 trait MessagingLive extends Messaging {
   val producer = KafkaProducer(
     Conf(new StringSerializer(), new StringSerializer(), lingerMs = 0,
@@ -69,6 +64,10 @@ trait MessagingLive extends Messaging {
       ZIO.fromFuture(implicit ec => producer.send(record).map(_ => ()))
     }
   }
+}
+object messaging {
+  def send(msg: String): ZIO[Messaging, Throwable, Unit] =
+    ZIO.accessM(_.messenger.send(msg))
 }
 
 object MessagingLive extends MessagingLive
